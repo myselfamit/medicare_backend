@@ -99,7 +99,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',  # CHANGED: Allow any for testing
     ],
-    'EXCEPTION_HANDLER': 'travel_backend.utils.exception_handler.custom_exception_handler',
+    # 'EXCEPTION_HANDLER': 'travel_backend.utils.exception_handler.custom_exception_handler',
     'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.NamespaceVersioning',
     'DEFAULT_VERSION': 'v1',
     'ALLOWED_VERSIONS': ['v1'],
