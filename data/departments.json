@@ -1,0 +1,114 @@
+{
+  "departments": [
+    {
+      "id": 1,
+      "name": "Cardiology",
+      "specialties": [
+        "Interventional Cardiology",
+        "Pediatric Cardiology",
+        "Cardiac Electrophysiology",
+        "Heart Failure",
+        "Preventive Cardiology"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Neurology",
+      "specialties": [
+        "Stroke Medicine",
+        "Epilepsy",
+        "Movement Disorders",
+        "Neuromuscular Medicine",
+        "Headache Medicine"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Pediatrics",
+      "specialties": [
+        "Neonatology",
+        "Pediatric Emergency",
+        "Developmental Pediatrics",
+        "Pediatric Pulmonology",
+        "Pediatric Gastroenterology"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Orthopedics",
+      "specialties": [
+        "Sports Medicine",
+        "Joint Replacement",
+        "Spine Surgery",
+        "Pediatric Orthopedics",
+        "Trauma Surgery"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Dermatology",
+      "specialties": [
+        "Cosmetic Dermatology",
+        "Pediatric Dermatology",
+        "Surgical Dermatology",
+        "Medical Dermatology",
+        "Dermatopathology"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Gynecology",
+      "specialties": [
+        "Obstetrics",
+        "Reproductive Medicine",
+        "Maternal-Fetal Medicine",
+        "Gynecologic Oncology",
+        "Urogynecology"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "Ophthalmology",
+      "specialties": [
+        "Cataract Surgery",
+        "Retina Surgery",
+        "Glaucoma",
+        "Pediatric Ophthalmology",
+        "Cornea and External Disease"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "ENT",
+      "specialties": [
+        "Rhinology",
+        "Laryngology",
+        "Otology",
+        "Pediatric ENT",
+        "Head and Neck Surgery"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "Gastroenterology",
+      "specialties": [
+        "Hepatology",
+        "Inflammatory Bowel Disease",
+        "Pancreatic Diseases",
+        "Endoscopy",
+        "Motility Disorders"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "Psychiatry",
+      "specialties": [
+        "Child Psychiatry",
+        "Addiction Psychiatry",
+        "Geriatric Psychiatry",
+        "Forensic Psychiatry",
+        "Emergency Psychiatry"
+      ]
+    }
+  ]
+}

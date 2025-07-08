@@ -19,18 +19,16 @@ def check_user_function(user_type=None, email_id=None, password=None):
     full_path = base_path + customise_path
     full_path = full_path.replace("\\", "/")
     df = pd.read_csv(full_path)
-
-    for i in range(0, len(df["email_id"])):
+    
+    for i in range(len(df)):
         if (
-            (df["user_type"][i] == user_type)
-            and (df["email_id"][i] == email_id)
-            and (df["password"][i] == password)
+            df["user_type"][i] == user_type and
+            df["email_id"][i] == email_id and
+            df["password"][i] == password
         ):
-            data = "exists"
-            return data
-        else:
-            data = "does not exists"
-            return data
+            return "exists"
+    
+    return "does not exist"
 
 def login_function(request):
     try:

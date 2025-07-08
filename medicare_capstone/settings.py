@@ -49,7 +49,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'contacts'
+    'contacts',
+    'backend_doctor',
+    'medicare_admin',
+    'patients'
 ]
 
 MIDDLEWARE = [
