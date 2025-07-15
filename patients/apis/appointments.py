@@ -17,6 +17,11 @@ from patients.functions.appointments import (
     get_patient_appointments_data,
     update_appointment_data
 )
+from patients.functions.appointments import (
+    submit_feedback_data,
+    get_feedback_history_data,
+    update_feedback_data
+)
 
 # Logger instance
 logger = logging.getLogger("backend_patient_appointments")
@@ -213,4 +218,79 @@ class UpdateAppointment(APIView):
             raise
         except Exception as e:
             logger.error("UPDATE APPOINTMENT API VIEW : PUT - {}".format(e))
+            raise ce.InternalServerError
+        
+        
+# Add these classes at the end of the file
+
+# Submit Feedback API
+class SubmitFeedback(APIView):
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
+    versioning_class = VersioningConfig
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        """
+        Submit feedback/rating for a completed appointment
+        Request body: user_type, email_id, appointment_id, doctor_id, rating, comment, etc.
+        """
+        try:
+            if request.version == "v1":
+                output = submit_feedback_data(request)
+                return output
+            else:
+                raise ce.VersionNotSupported
+        except ce.VersionNotSupported as vns:
+            logger.error("SUBMIT FEEDBACK API VIEW : POST - {}".format(vns))
+            raise
+        except Exception as e:
+            logger.error("SUBMIT FEEDBACK API VIEW : POST - {}".format(e))
+            raise ce.InternalServerError
+
+# Get Feedback History API
+class FeedbackHistory(APIView):
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
+    versioning_class = VersioningConfig
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        """
+        Get patient's feedback history
+        Request body: user_type, email_id
+        """
+        try:
+            if request.version == "v1":
+                output = get_feedback_history_data(request)
+                return output
+            else:
+                raise ce.VersionNotSupported
+        except ce.VersionNotSupported as vns:
+            logger.error("FEEDBACK HISTORY API VIEW : POST - {}".format(vns))
+            raise
+        except Exception as e:
+            logger.error("FEEDBACK HISTORY API VIEW : POST - {}".format(e))
+            raise ce.InternalServerError
+
+# Update Feedback API
+class UpdateFeedback(APIView):
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
+    versioning_class = VersioningConfig
+    permission_classes = [AllowAny]
+
+    def put(self, request):
+        """
+        Update existing feedback
+        Request body: user_type, email_id, feedback_id, rating, comment, would_recommend
+        """
+        try:
+            if request.version == "v1":
+                output = update_feedback_data(request)
+                return output
+            else:
+                raise ce.VersionNotSupported
+        except ce.VersionNotSupported as vns:
+            logger.error("UPDATE FEEDBACK API VIEW : PUT - {}".format(vns))
+            raise
+        except Exception as e:
+            logger.error("UPDATE FEEDBACK API VIEW : PUT - {}".format(e))
             raise ce.InternalServerError

@@ -750,3 +750,389 @@ def update_appointment_data(request, appointment_id):
             },
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+        
+        
+def submit_feedback_data(request):
+    """
+    Submit feedback/rating for a completed appointment
+    """
+    try:
+        user_type = request.data.get("user_type", "").lower()
+        email_id = request.data.get("email_id", "").lower()
+        appointment_id = request.data.get("appointment_id")
+        doctor_id = request.data.get("doctor_id")
+        rating = request.data.get("rating")
+        category = request.data.get("category", "overall")
+        comment = request.data.get("comment", "")
+        would_recommend = request.data.get("would_recommend", "")
+        
+        # Validate input
+        if not user_type or not email_id:
+            return Response(
+                {
+                    "success": False,
+                    "status_code": status.HTTP_400_BAD_REQUEST,
+                    "error": "user_type and email_id are required",
+                    "timestamp": datetime.now().isoformat()
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if user_type != 'patient':
+            return Response(
+                {
+                    "success": False,
+                    "status_code": status.HTTP_403_FORBIDDEN,
+                    "error": "Access denied. Only patients can submit feedback.",
+                    "timestamp": datetime.now().isoformat()
+                },
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        if not all([appointment_id, doctor_id, rating, comment]):
+            return Response(
+                {
+                    "success": False,
+                    "status_code": status.HTTP_400_BAD_REQUEST,
+                    "error": "appointment_id, doctor_id, rating, and comment are required",
+                    "timestamp": datetime.now().isoformat()
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validate rating
+        try:
+            rating = int(rating)
+            if rating < 1 or rating > 5:
+                raise ValueError("Rating must be between 1 and 5")
+        except (ValueError, TypeError):
+            return Response(
+                {
+                    "success": False,
+                    "status_code": status.HTTP_400_BAD_REQUEST,
+                    "error": "Rating must be a number between 1 and 5",
+                    "timestamp": datetime.now().isoformat()
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Load necessary data
+        appointments_data = load_json_data("appointments.json")
+        feedback_data = load_json_data("feedback.json")
+        
+        if "feedback" not in feedback_data:
+            feedback_data["feedback"] = []
+        
+        # Find the appointment
+        appointment = next((
+            apt for apt in appointments_data.get("appointments", [])
+            if apt.get('id') == appointment_id and apt.get('patient_email', '').lower() == email_id
+        ), None)
+        
+        if not appointment:
+            return Response(
+                {
+                    "success": False,
+                    "status_code": status.HTTP_404_NOT_FOUND,
+                    "error": "Appointment not found or access denied",
+                    "timestamp": datetime.now().isoformat()
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Check if appointment is completed
+        if appointment.get('status') != 'completed':
+            return Response(
+                {
+                    "success": False,
+                    "status_code": status.HTTP_400_BAD_REQUEST,
+                    "error": "Can only rate completed appointments",
+                    "timestamp": datetime.now().isoformat()
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check if feedback already exists
+        existing_feedback = next((
+            fb for fb in feedback_data["feedback"]
+            if fb.get('appointment_id') == appointment_id
+        ), None)
+        
+        if existing_feedback:
+            return Response(
+                {
+                    "success": False,
+                    "status_code": status.HTTP_409_CONFLICT,
+                    "error": "Feedback already submitted for this appointment",
+                    "timestamp": datetime.now().isoformat()
+                },
+                status=status.HTTP_409_CONFLICT
+            )
+        
+        # Create feedback entry
+        feedback_id = str(uuid.uuid4())
+        new_feedback = {
+            "id": feedback_id,
+            "appointment_id": appointment_id,
+            "patient_email": email_id,
+            "patient_name": appointment.get('patient_name', ''),
+            "doctor_id": int(doctor_id),
+            "doctor_name": appointment.get('doctor_name', ''),
+            "department": appointment.get('department', ''),
+            "specialty": appointment.get('specialty', ''),
+            "rating": rating,
+            "category": category,
+            "comment": comment.strip(),
+            "would_recommend": would_recommend,
+            "appointment_date": appointment.get('date', ''),
+            "appointment_time": appointment.get('time', ''),
+            "feedback_date": datetime.now().strftime('%Y-%m-%d'),
+            "feedback_time": datetime.now().strftime('%H:%M:%S'),
+            "created_at": datetime.now().isoformat(),
+            "status": "active"
+        }
+        
+        # Add feedback to data
+        feedback_data["feedback"].append(new_feedback)
+        
+        # Update appointment to mark as rated
+        for apt in appointments_data.get("appointments", []):
+            if apt.get('id') == appointment_id:
+                apt['rated'] = True
+                apt['rating'] = rating
+                apt['updated_at'] = datetime.now().isoformat()
+                break
+        
+        # Save both files
+        feedback_saved = save_json_data("feedback.json", feedback_data)
+        appointments_saved = save_json_data("appointments.json", appointments_data)
+        
+        if feedback_saved and appointments_saved:
+            return Response(
+                {
+                    "success": True,
+                    "status_code": status.HTTP_201_CREATED,
+                    "message": "Feedback submitted successfully",
+                    "timestamp": datetime.now().isoformat(),
+                    "data": new_feedback
+                },
+                status=status.HTTP_201_CREATED
+            )
+        else:
+            return Response(
+                {
+                    "success": False,
+                    "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "error": "Failed to save feedback",
+                    "timestamp": datetime.now().isoformat()
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+    except Exception as e:
+        logger.error(f"Error submitting feedback: {e}")
+        return Response(
+            {
+                "success": False,
+                "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "error": "Internal server error",
+                "timestamp": datetime.now().isoformat()
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+def get_feedback_history_data(request):
+    """
+    Get patient's feedback history
+    """
+    try:
+        user_type = request.data.get("user_type", "").lower()
+        email_id = request.data.get("email_id", "").lower()
+        
+        # Validate input
+        if not user_type or not email_id:
+            return Response(
+                {
+                    "success": False,
+                    "status_code": status.HTTP_400_BAD_REQUEST,
+                    "error": "user_type and email_id are required",
+                    "timestamp": datetime.now().isoformat()
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if user_type != 'patient':
+            return Response(
+                {
+                    "success": False,
+                    "status_code": status.HTTP_403_FORBIDDEN,
+                    "error": "Access denied. Only patients can view feedback history.",
+                    "timestamp": datetime.now().isoformat()
+                },
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Load feedback data
+        feedback_data = load_json_data("feedback.json")
+        all_feedback = feedback_data.get("feedback", [])
+        
+        # Filter patient's feedback
+        patient_feedback = [
+            fb for fb in all_feedback
+            if fb.get('patient_email', '').lower() == email_id and fb.get('status') == 'active'
+        ]
+        
+        # Sort by date (most recent first)
+        patient_feedback.sort(
+            key=lambda x: (x.get('feedback_date', ''), x.get('feedback_time', '')),
+            reverse=True
+        )
+        
+        return Response(
+            {
+                "success": True,
+                "status_code": status.HTTP_200_OK,
+                "message": "Feedback history retrieved successfully",
+                "timestamp": datetime.now().isoformat(),
+                "data": {
+                    "feedback": patient_feedback,
+                    "total_count": len(patient_feedback)
+                }
+            },
+            status=status.HTTP_200_OK
+        )
+        
+    except Exception as e:
+        logger.error(f"Error getting feedback history: {e}")
+        return Response(
+            {
+                "success": False,
+                "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "error": "Internal server error",
+                "timestamp": datetime.now().isoformat()
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+def update_feedback_data(request):
+    """
+    Update existing feedback
+    """
+    try:
+        user_type = request.data.get("user_type", "").lower()
+        email_id = request.data.get("email_id", "").lower()
+        feedback_id = request.data.get("feedback_id")
+        rating = request.data.get("rating")
+        comment = request.data.get("comment")
+        would_recommend = request.data.get("would_recommend")
+        
+        # Validate input
+        if not user_type or not email_id or not feedback_id:
+            return Response(
+                {
+                    "success": False,
+                    "status_code": status.HTTP_400_BAD_REQUEST,
+                    "error": "user_type, email_id, and feedback_id are required",
+                    "timestamp": datetime.now().isoformat()
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if user_type != 'patient':
+            return Response(
+                {
+                    "success": False,
+                    "status_code": status.HTTP_403_FORBIDDEN,
+                    "error": "Access denied. Only patients can update feedback.",
+                    "timestamp": datetime.now().isoformat()
+                },
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Load feedback data
+        feedback_data = load_json_data("feedback.json")
+        feedback_list = feedback_data.get("feedback", [])
+        
+        # Find feedback
+        feedback_index = next((
+            index for index, fb in enumerate(feedback_list)
+            if fb.get('id') == feedback_id and fb.get('patient_email', '').lower() == email_id
+        ), None)
+        
+        if feedback_index is None:
+            return Response(
+                {
+                    "success": False,
+                    "status_code": status.HTTP_404_NOT_FOUND,
+                    "error": "Feedback not found or access denied",
+                    "timestamp": datetime.now().isoformat()
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        feedback = feedback_list[feedback_index]
+        
+        # Update feedback fields
+        if rating is not None:
+            try:
+                rating = int(rating)
+                if rating < 1 or rating > 5:
+                    raise ValueError("Rating must be between 1 and 5")
+                feedback['rating'] = rating
+            except (ValueError, TypeError):
+                return Response(
+                    {
+                        "success": False,
+                        "status_code": status.HTTP_400_BAD_REQUEST,
+                        "error": "Rating must be a number between 1 and 5",
+                        "timestamp": datetime.now().isoformat()
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        if comment is not None:
+            feedback['comment'] = comment.strip()
+        
+        if would_recommend is not None:
+            feedback['would_recommend'] = bool(would_recommend)
+        
+        feedback['updated_at'] = datetime.now().isoformat()
+        
+        # Update feedback in data
+        feedback_list[feedback_index] = feedback
+        feedback_data["feedback"] = feedback_list
+        
+        # Save updated data
+        if save_json_data("feedback.json", feedback_data):
+            return Response(
+                {
+                    "success": True,
+                    "status_code": status.HTTP_200_OK,
+                    "message": "Feedback updated successfully",
+                    "timestamp": datetime.now().isoformat(),
+                    "data": feedback
+                },
+                status=status.HTTP_200_OK
+            )
+        else:
+            return Response(
+                {
+                    "success": False,
+                    "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "error": "Failed to save feedback updates",
+                    "timestamp": datetime.now().isoformat()
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    except Exception as e:
+        logger.error(f"Error updating feedback: {e}")
+        return Response(
+            {
+                "success": False,
+                "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "error": "Internal server error",
+                "timestamp": datetime.now().isoformat()
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
