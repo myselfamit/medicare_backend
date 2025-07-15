@@ -4,7 +4,7 @@ from backend_doctor.apis.dashboard import Dashboard
 # from backend_doctor.apis.appointments import Appointments
 # from backend_doctor.apis.patients import Patients
 # from backend_doctor.apis.reviews import Reviews
-# from backend_doctor.apis.profile import Profile
+from backend_doctor.apis.profile import DoctorProfile
 
 
 urlpatterns = [
@@ -13,6 +13,6 @@ urlpatterns = [
     # path("appointments", User_login.as_view(), name="log-in"),
     # path("patients", User_login.as_view(), name="log-in"),
     # path("reviews", User_login.as_view(), name="log-in"),
-    # path("profile", User_login.as_view(), name="log-in"),
+    path("profile", DoctorProfile.as_view(), name="DoctorProfile"),
 ]
 

@@ -1,4 +1,0 @@
-user_id,user_type,first_name,last_name,email_id,mobile,password,created_at
-1,patient,Alice,Smith,alice@example.com,1111111111,alice123,2025-06-07 15:17:36.885036
-2,doctor,Bob,Jones,bob@hospital.com,2222222222,bob456,2025-06-07 15:17:36.885036
-3,admin,Carol,Lee,carol@admin.com,3333333333,admin789,2025-06-07 15:17:36.885036
